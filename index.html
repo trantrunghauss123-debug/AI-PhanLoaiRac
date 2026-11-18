@@ -1,14 +1,216 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#1769d2" />
-  <meta name="description" content="WasteAI - Hệ thống AI nhận diện và phân loại rác thông minh." />
-  <title>WasteAI - AI Phân Loại Rác</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Phân Loại Rác Thông Minh</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f0f4f8; color: #333; }
+
+        /* --- MÀN HÌNH ĐĂNG NHẬP --- */
+        #login-screen {
+            display: flex; justify-content: center; align-items: center; height: 100vh;
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        .login-box {
+            background: white; padding: 40px; border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 380px; text-align: center;
+        }
+        .login-box h2 { margin-bottom: 20px; color: #2c3e50; }
+        .login-box input {
+            width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px;
+        }
+        .login-box button {
+            width: 100%; padding: 12px; background-color: #27ae60; color: white;
+            border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;
+        }
+        .login-box button:hover { background-color: #219150; }
+        .hint { font-size: 12px; color: #7f8c8d; margin-top: 10px; }
+
+        /* --- GIAO DIỆN CHÍNH (Ẩn khi chưa đăng nhập) --- */
+        #main-app { display: none; }
+
+        /* Thanh Menu */
+        nav {
+            background-color: #2c3e50; padding: 15px 30px; display: flex;
+            justify-content: space-between; align-items: center; flex-wrap: wrap;
+        }
+        .nav-links { display: flex; gap: 20px; align-items: center; }
+        .nav-links a {
+            color: white; text-decoration: none; font-weight: 500; cursor: pointer;
+            padding: 8px 12px; border-radius: 5px; transition: 0.3s;
+        }
+        .nav-links a:hover, .nav-links a.active { background-color: #34495e; color: #2ecc71; }
+        
+        /* Nút Đăng Xuất Màu Đỏ */
+        .btn-logout {
+            background-color: #e74c3c; color: white; border: none; padding: 10px 18px;
+            border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .btn-logout:hover { background-color: #c0392b; }
+
+        /* Nội dung các Tab */
+        .container { max-width: 800px; margin: 30px auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Khu vực Phân Loại */
+        .upload-area {
+            border: 2px dashed #2ecc71; padding: 30px; text-align: center;
+            border-radius: 10px; margin: 20px 0; background-color: #f9fffb;
+        }
+        #preview-img { max-width: 300px; max-height: 300px; margin: 15px auto; display: none; border-radius: 8px; }
+      .btn-classify {
+            background-color: #2980b9; color: white; border: none; padding: 14px 30px;
+            font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; display: block; margin: 0 auto;
+        }
+        .btn-classify:hover { background-color: #1f6391; }
+        #result-box {
+            margin-top: 25px; padding: 20px; border-radius: 8px; background-color: #ecf0f1;
+            text-align: center; display: none;
+        }
+
+        /* Bảng Lịch Sử */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #2ecc71; color: white; }
+    </style>
 </head>
 <body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
-</body>
-</html>
+
+    <!-- 1. MÀN HÌNH ĐĂNG NHẬP -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>♻️ Đăng Nhập Hệ Thống</h2>
+            <input type="text" id="username" placeholder="Tên đăng nhập (VD: admin)" required>
+            <input type="password" id="password" placeholder="Mật khẩu (VD: 123)" required>
+            <button onclick="login()">Đăng Nhập</button>
+            <p class="hint">Tài khoản mặc định: <b>admin</b> / Mật khẩu: <b>123</b></p>
+        </div>
+    </div>
+
+    <!-- 2. GIAO DIỆN CHÍNH SAU KHI ĐĂNG NHẬP -->
+    <div id="main-app">
+        <!-- Thanh Menu -->
+        <nav>
+            <div class="nav-links">
+                <a onclick="switchTab('home')" id="nav-home" class="active">Trang Chủ</a>
+                <a onclick="switchTab('history')" id="nav-history">Lịch sử</a>
+                <a onclick="switchTab('guide')" id="nav-guide">Giới thiệu & Hướng dẫn sử dụng</a>
+            </div>
+            <button class="btn-logout" onclick="logout()">Đăng xuất</button>
+        </nav>
+
+        <div class="container">
+            <!-- TAB 1: TRANG CHỦ (PHÂN LOẠI RÁC) -->
+            <div id="tab-home" class="tab-content active">
+                <h2 style="text-align: center; color: #27ae60;">Hệ Thống Nhận Diện & Phân Loại Rác</h2>
+                <div class="upload-area">
+                    <p>Chọn hình ảnh rác thải từ thiết bị của bạn:</p><br>
+                    <input type="file" id="image-input" accept="image/*" onchange="previewImage(event)">
+                    <img id="preview-img" alt="Ảnh xem trước">
+                </div>
+                
+                <button class="btn-classify" onclick="classifyWaste()">🔍 Phân Loại</button>
+
+                <div id="result-box">
+                    <h3 id="result-title"></h3>
+                    <p id="result-desc" style="margin-top: 8px;"></p>
+                </div>
+            </div>
+
+            <!-- TAB 2: LỊCH SỬ -->
+            <div id="tab-history" class="tab-content">
+                <h2>📜 Lịch Sử Phân Loại</h2>
+                <button onclick="clearHistory()" style="margin-top:10px; padding: 5px 10px; cursor:pointer;">Xóa lịch sử</button>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Tên tệp ảnh</th>
+                            <th>Kết quả phân loại</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <!-- Dữ liệu lịch sử tự động thêm vào đây -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- TAB 3: GIỚI THIỆU & HƯỚNG DẪN SỬ DỤNG -->
+            <div id="tab-guide" class="tab-content">
+                <h2>📘 Giới Thiệu & Hướng Dẫn Sử Dụng</h2>
+                <p style="margin: 15px 0; line-height: 1.6;">
+                    <b>Giới thiệu:</b> Ứng dụng web hỗ trợ nhận diện và phân loại rác thải tự động thành các nhóm: Rác hữu cơ, Rác tái chế và Rác vô cơ nhằm nâng cao ý thức bảo vệ môi trường.
+                </p>
+                <h3 style="margin-top: 20px;">Các bước sử dụng:</h3>
+                <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+                    <li>Tại mục <b>Trang Chủ</b>, nhấn nút <b>Choose File (Chọn tệp)</b> để tải ảnh rác cần nhận diện lên.</li>
+                    <li>Nhấn nút màu xanh <b>"Phân Loại"</b> để hệ thống tiến hành phân tích hình ảnh.</li>
+                    <li>Xem kết quả và hướng dẫn bỏ rác đúng thùng quy định hiển thị bên dưới.</li>
+                    <li>Kiểm tra lại các lần đã phân loại tại mục <b>Lịch sử</b> trên thanh menu.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- XỬ LÝ ĐĂNG NHẬP / ĐĂNG XUẤT ---
+        function login() {
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (user === 'admin' && pass === '123') {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+                loadHistory();
+            } else {
+                alert('Sai tài khoản hoặc mật khẩu! Vui lòng nhập admin / 123');
+            }
+        }
+
+        function logout() {
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // --- CHUYỂN ĐỔI TAB MENU ---
+        function switchTab(tabName) {
+          document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+
+            document.getElementById('tab-' + tabName).classList.add('active');
+            document.getElementById('nav-' + tabName).classList.add('active');
+        }
+
+        // --- XEM TRƯỚC ẢNH ---
+        let currentFileName = "";
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('preview-img');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('result-box').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- HÀM PHÂN LOẠI RÁC (MÔ PHỎNG AI - CÓ THỂ GẮN MODEL TEACHABLE MACHINE VÀO ĐÂY) ---
+        function classifyWaste() {
+            const img = document.getElementById('preview-img');
+            if (!img.src || img.style.display === 'none') {
+                alert('Vui lòng chọn một hình ảnh rác trước khi bấm Phân Loại!');
+                return;
+            }
+
+            // Danh sách mẫu kết quả (Sau này bạn thay bằng hàm predict() của Teachable Machine)
+            const wasteTypes = [
+                { type: "Rác Tái Chế (Chai nhựa / Giấy /
