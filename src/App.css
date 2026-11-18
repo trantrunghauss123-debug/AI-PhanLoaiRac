@@ -1,3 +1,4 @@
+/* ===== GLOBAL ===== */
 * {
   margin: 0;
   padding: 0;
@@ -6,17 +7,100 @@
 
 body {
   font-family: Arial, sans-serif;
-  background: #f5f9ff;
+  background: #f4f8ff;
   color: #1e293b;
+  min-height: 100vh;
 }
 
-h1 {
+button,
+input {
+  font-family: inherit;
+}
+
+/* ===== MAIN APP ===== */
+#root {
+  min-height: 100vh;
+}
+
+.app-container {
+  width: 100%;
+  min-height: 100vh;
+  background: #f4f8ff;
+}
+
+/* ===== HEADER ===== */
+.header {
+  background: #ffffff;
+  padding: 20px 7%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
   color: #2563eb;
-  text-align: center;
-  margin-top: 50px;
 }
 
-p {
+/* ===== CONTENT ===== */
+.main-content {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.section-title {
   text-align: center;
-  margin-top: 20px;
+  color: #1d4ed8;
+  font-size: 30px;
+  margin-bottom: 15px;
+}
+
+.section-description {
+  text-align: center;
+  color: #64748b;
+  margin-bottom: 30px;
+}
+
+/* ===== CARD ===== */
+.card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 25px;
+  box-shadow: 0 5px 20px rgba(37,99,235,0.08);
+  margin-bottom: 25px;
+}
+
+/* ===== BUTTON ===== */
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: 0.2s;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .header {
+    padding: 16px 5%;
+  }
+
+  .main-content {
+    margin: 20px auto;
+    padding: 15px;
+  }
+
+  .section-title {
+    font-size: 24px;
+  }
 }
