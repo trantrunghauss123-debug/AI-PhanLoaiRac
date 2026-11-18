@@ -216,4 +216,112 @@
 
         // --- XỬ LÝ ĐĂNG NHẬP ---
         function handleLogin() {
-            const user =
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+
+            // Tài khoản mặc định sẵn để tiện test nhanh
+            if (user === 'admin' && pass === '123') {
+                loginSuccess();
+                return;
+            }
+
+            // Kiểm tra trong danh sách tài khoản người dùng đã đăng ký
+            let users = JSON.parse(localStorage.getItem('appUsers')) || [];
+            let validUser = users.find(u => u.username === user && u.password === pass);
+
+            if (validUser) {
+                loginSuccess();
+            } else {
+                alert('Sai tên đăng nhập hoặc mật khẩu! (Hoặc bạn chưa đăng ký tài khoản này).');
+            }
+        }
+
+        function loginSuccess() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('register-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            loadHistory();
+        }
+
+        function logout() {
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('login-user').value = '';
+            document.getElementById('login-pass').value = '';
+        }
+
+        // --- CHUYỂN ĐỔI TAB TRÊN MENU ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+
+            document.getElementById('tab-' + tabName).classList.add('active');
+            document.getElementById('nav-' + tabName).classList.add('active');
+        }
+
+        // --- XEM TRƯỚC ẢNH ---
+        let currentFileName = "";
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                currentFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('preview-img');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('result-box').style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // --- PHÂN LOẠI RÁC ---
+        function classifyWaste() {
+            const img = document.getElementById('preview-img');
+            if (!img.src || img.style.display === 'none') {
+                alert('Vui lòng chọn hình ảnh rác trước khi bấm phân loại!');
+                return;
+            }
+
+            const wasteTypes = [
+                { type: "Rác Tái Chế (Chai nhựa / Giấy / Lon kim loại)", desc: "👉 Vui lòng bỏ vào thùng rác màu XANH DƯƠNG hoặc TRẮNG." },
+                { type: "Rác Hữu Cơ (Thức ăn thừa / Rau củ / Lá cây)", desc: "👉 Vui lòng bỏ vào thùng rác màu XANH LÁ CÂY để ủ phân." },
+                { type: "Rác Vô Cơ / Khó phân hủy (Túi nilon bẩn / Sành sứ)", desc: "👉 Vui lòng bỏ vào thùng rác màu XÁM hoặc VÀNG." }
+            ];
+
+            const randomResult = wasteTypes[Math.floor(Math.random() * wasteTypes.length)];
+
+            const resultBox = document.getElementById('result-box');
+            document.getElementById('result-title').innerText = "Kết quả: " + randomResult.type;
+            document.getElementById('result-desc').innerText = randomResult.desc;
+            resultBox.style.display = 'block';
+
+            saveHistory(currentFileName, randomResult.type);
+        }
+
+        // --- LỊCH SỬ ---
+        function saveHistory(fileName, result) {
+            let history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
+            const now = new Date().toLocaleString('vi-VN');
+            history.unshift({ time: now, file: fileName, res: result });
+            localStorage.setItem('wasteHistory', JSON.stringify(history));
+            loadHistory();
+        }
+
+        function loadHistory() {
+            let history = JSON.parse(localStorage.getItem('wasteHistory')) || [];
+            const tbody = document.getElementById('history-table-body');
+            tbody.innerHTML = '';
+            history.forEach(item => {
+                tbody.innerHTML += `<tr><td>${item.time}</td><td>${item.file}</td><td><b>${item.res}</b></td></tr>`;
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('wasteHistory');
+            loadHistory();
+        }
+    </script>
+</body>
+</html>
