@@ -8,25 +8,26 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: #f0f4f8; color: #333; }
 
-        /* --- MÀN HÌNH ĐĂNG NHẬP --- */
-        #login-screen {
+        /* --- KHUNG CHUNG CHO ĐĂNG NHẬP / ĐĂNG KÝ --- */
+        .auth-container {
             display: flex; justify-content: center; align-items: center; height: 100vh;
             background: linear-gradient(135deg, #2ecc71, #27ae60);
         }
-        .login-box {
+        .auth-box {
             background: white; padding: 40px; border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 100%; max-width: 380px; text-align: center;
         }
-        .login-box h2 { margin-bottom: 20px; color: #2c3e50; }
-        .login-box input {
+        .auth-box h2 { margin-bottom: 20px; color: #2c3e50; }
+        .auth-box input {
             width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px;
         }
-        .login-box button {
+        .auth-box button {
             width: 100%; padding: 12px; background-color: #27ae60; color: white;
-            border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold;
+            border: none; border-radius: 6px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px;
         }
-        .login-box button:hover { background-color: #219150; }
-        .hint { font-size: 12px; color: #7f8c8d; margin-top: 10px; }
+        .auth-box button:hover { background-color: #219150; }
+        .switch-text { margin-top: 15px; font-size: 14px; color: #555; }
+        .switch-text a { color: #27ae60; cursor: pointer; text-decoration: underline; font-weight: bold; }
 
         /* --- GIAO DIỆN CHÍNH (Ẩn khi chưa đăng nhập) --- */
         #main-app { display: none; }
@@ -61,7 +62,7 @@
             border-radius: 10px; margin: 20px 0; background-color: #f9fffb;
         }
         #preview-img { max-width: 300px; max-height: 300px; margin: 15px auto; display: none; border-radius: 8px; }
-      .btn-classify {
+        .btn-classify {
             background-color: #2980b9; color: white; border: none; padding: 14px 30px;
             font-size: 18px; font-weight: bold; border-radius: 8px; cursor: pointer; display: block; margin: 0 auto;
         }
@@ -80,17 +81,32 @@
 <body>
 
     <!-- 1. MÀN HÌNH ĐĂNG NHẬP -->
-    <div id="login-screen">
-        <div class="login-box">
+    <div id="login-screen" class="auth-container">
+        <div class="auth-box">
             <h2>♻️ Đăng Nhập Hệ Thống</h2>
-            <input type="text" id="username" placeholder="Tên đăng nhập (VD: admin)" required>
-            <input type="password" id="password" placeholder="Mật khẩu (VD: 123)" required>
-            <button onclick="login()">Đăng Nhập</button>
-            <p class="hint">Tài khoản mặc định: <b>admin</b> / Mật khẩu: <b>123</b></p>
+            <input type="text" id="login-user" placeholder="Tên đăng nhập" required>
+            <input type="password" id="login-pass" placeholder="Mật khẩu" required>
+            <button onclick="handleLogin()">Đăng Nhập</button>
+            <div class="switch-text">
+                Chưa có tài khoản? <a onclick="showRegister()">Đăng ký ngay</a>
+            </div>
         </div>
     </div>
 
-    <!-- 2. GIAO DIỆN CHÍNH SAU KHI ĐĂNG NHẬP -->
+    <!-- 2. MÀN HÌNH ĐĂNG KÝ -->
+    <div id="register-screen" class="auth-container" style="display: none;">
+        <div class="auth-box">
+            <h2>📝 Đăng Ký Tài Khoản</h2>
+            <input type="text" id="reg-user" placeholder="Tên đăng nhập mới" required>
+            <input type="password" id="reg-pass" placeholder="Mật khẩu mới" required>
+            <button onclick="handleRegister()">Đăng Ký</button>
+            <div class="switch-text">
+                Đã có tài khoản? <a onclick="showLogin()">Đăng nhập</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. GIAO DIỆN CHÍNH SAU KHI ĐĂNG NHẬP THÀNH CÔNG -->
     <div id="main-app">
         <!-- Thanh Menu -->
         <nav>
@@ -99,6 +115,7 @@
                 <a onclick="switchTab('history')" id="nav-history">Lịch sử</a>
                 <a onclick="switchTab('guide')" id="nav-guide">Giới thiệu & Hướng dẫn sử dụng</a>
             </div>
+            <!-- Nút đăng xuất màu đỏ đúng yêu cầu -->
             <button class="btn-logout" onclick="logout()">Đăng xuất</button>
         </nav>
 
@@ -133,7 +150,7 @@
                         </tr>
                     </thead>
                     <tbody id="history-table-body">
-                        <!-- Dữ liệu lịch sử tự động thêm vào đây -->
+                        <!-- Lịch sử tự động điền vào đây -->
                     </tbody>
                 </table>
             </div>
@@ -146,71 +163,57 @@
                 </p>
                 <h3 style="margin-top: 20px;">Các bước sử dụng:</h3>
                 <ol style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
-                    <li>Tại mục <b>Trang Chủ</b>, nhấn nút <b>Choose File (Chọn tệp)</b> để tải ảnh rác cần nhận diện lên.</li>
+                    <li>Tại mục <b>Trang Chủ</b>, nhấn nút chọn tệp để tải ảnh rác cần nhận diện lên.</li>
                     <li>Nhấn nút màu xanh <b>"Phân Loại"</b> để hệ thống tiến hành phân tích hình ảnh.</li>
                     <li>Xem kết quả và hướng dẫn bỏ rác đúng thùng quy định hiển thị bên dưới.</li>
-                    <li>Kiểm tra lại các lần đã phân loại tại mục <b>Lịch sử</b> trên thanh menu.</li>
+                    <li>Kiểm tra lại lịch sử các lần đã phân loại tại mục <b>Lịch sử</b> trên thanh menu.</li>
                 </ol>
             </div>
         </div>
     </div>
 
     <script>
-        // --- XỬ LÝ ĐĂNG NHẬP / ĐĂNG XUẤT ---
-        function login() {
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-
-            if (user === 'admin' && pass === '123') {
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-                loadHistory();
-            } else {
-                alert('Sai tài khoản hoặc mật khẩu! Vui lòng nhập admin / 123');
-            }
+        // --- CHUYỂN QUA LẠI GIỮA TRANG ĐĂNG NHẬP VÀ ĐĂNG KÝ ---
+        function showRegister() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('register-screen').style.display = 'flex';
         }
 
-        function logout() {
-            document.getElementById('main-app').style.display = 'none';
+        function showLogin() {
+            document.getElementById('register-screen').style.display = 'none';
             document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
         }
 
-        // --- CHUYỂN ĐỔI TAB MENU ---
-        function switchTab(tabName) {
-          document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.nav-links a').forEach(link => link.classList.remove('active'));
+        // --- XỬ LÝ ĐĂNG KÝ ---
+        function handleRegister() {
+            const user = document.getElementById('reg-user').value.trim();
+            const pass = document.getElementById('reg-pass').value.trim();
 
-            document.getElementById('tab-' + tabName).classList.add('active');
-            document.getElementById('nav-' + tabName).classList.add('active');
-        }
-
-        // --- XEM TRƯỚC ẢNH ---
-        let currentFileName = "";
-        function previewImage(event) {
-            const file = event.target.files[0];
-            if (file) {
-                currentFileName = file.name;
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.getElementById('preview-img');
-                    img.src = e.target.result;
-                    img.style.display = 'block';
-                    document.getElementById('result-box').style.display = 'none';
-                }
-                reader.readAsDataURL(file);
-            }
-        }
-
-        // --- HÀM PHÂN LOẠI RÁC (MÔ PHỎNG AI - CÓ THỂ GẮN MODEL TEACHABLE MACHINE VÀO ĐÂY) ---
-        function classifyWaste() {
-            const img = document.getElementById('preview-img');
-            if (!img.src || img.style.display === 'none') {
-                alert('Vui lòng chọn một hình ảnh rác trước khi bấm Phân Loại!');
+            if (!user || !pass) {
+                alert('Vui lòng nhập đầy đủ tên tài khoản và mật khẩu!');
                 return;
             }
 
-            // Danh sách mẫu kết quả (Sau này bạn thay bằng hàm predict() của Teachable Machine)
-            const wasteTypes = [
-                { type: "Rác Tái Chế (Chai nhựa / Giấy /
+            // Lấy danh sách tài khoản đã lưu hoặc khởi tạo mảng rỗng
+            let users = JSON.parse(localStorage.getItem('appUsers')) || [];
+
+            // Kiểm tra xem tên đăng ký đã tồn tại chưa
+            let existing = users.find(u => u.username === user);
+            if (existing) {
+                alert('Tên tài khoản này đã tồn tại, vui lòng chọn tên khác!');
+                return;
+            }
+
+            // Lưu tài khoản mới vào LocalStorage
+            users.push({ username: user, password: pass });
+            localStorage.setItem('appUsers', JSON.stringify(users));
+
+            alert('Đăng ký thành công! Hãy đăng nhập lại.');
+            showLogin();
+            document.getElementById('reg-user').value = '';
+            document.getElementById('reg-pass').value = '';
+        }
+
+        // --- XỬ LÝ ĐĂNG NHẬP ---
+        function handleLogin() {
+            const user =
